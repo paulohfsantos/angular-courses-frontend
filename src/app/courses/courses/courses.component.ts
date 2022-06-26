@@ -1,7 +1,11 @@
 import { Component, OnInit } from '@angular/core';
+import { MatDialog } from '@angular/material/dialog';
+import { MatSnackBar } from '@angular/material/snack-bar';
+import { catchError, Observable, of } from 'rxjs';
+import { ErrorDialogComponent } from 'src/app/shared/components/error-dialog/error-dialog.component';
+
 import { Course } from '../model/course';
 import { CoursesService } from '../services/courses.service';
-import { Observable } from 'rxjs';
 
 export interface ICourse {
   id: number;
@@ -17,18 +21,31 @@ export interface ICourse {
   styleUrls: ['./courses.component.scss']
 })
 export class CoursesComponent implements OnInit {
-  courses: Observable<Course[]>;
+  courses$: Observable<Course[]>;
   displayedColumns = [ 'name', 'category' ];
 
-  // coursesService: CoursesService
+  constructor(
+    private coursesService: CoursesService,
+    private dialog: MatDialog,
+    private _snackBar: MatSnackBar
+  ) {
+    this.courses$ = this.coursesService.getCourses()
+      .pipe(
+        catchError(err => {
+          this.onError("Error retrieving courses");
+          return of([]);
+        })
+      )
 
-  constructor(private coursesService: CoursesService) {
-    // this.coursesService = new CoursesService(httpClient: HttpClient);
-    // this.coursesService.getCourses()
-
-    this.courses = this.coursesService.getCourses();
+    // console.log(this.courses$);
   }
 
   ngOnInit(): void {}
+
+  onError(err: string) {
+    this.dialog.open(ErrorDialogComponent, {
+      data: err
+    });
+  }
 
 }
